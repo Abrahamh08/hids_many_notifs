@@ -416,7 +416,7 @@ static void hid_init(void)
     __ASSERT(err == 0, "HIDS initialization failed\n");
 }
 
-static void send_dummy_mouse_buttons_report()
+static void send_dummy_mouse_buttons_report(uint8_t count)
 {
     for (size_t i = 0; i < CONFIG_BT_HIDS_MAX_CLIENT_COUNT; i++) {
         if (!conn_mode[i].conn) {
@@ -424,6 +424,7 @@ static void send_dummy_mouse_buttons_report()
         }
 
         uint8_t buff[INPUT_REP_BUTTONS_LEN] = {0};
+        memset(buff, count, sizeof(buff));
 
         LOG_INF("Sending dummy mouse buttons report");
         int err = bt_hids_inp_rep_send(&hids_obj, conn_mode[i].conn,
@@ -640,10 +641,16 @@ int main(void)
 
     num_comp_reply(true);
 
+    uint8_t count = 0;
+
     while (1) {
         k_sleep(K_MSEC(8));
         // if (start) {
-        send_dummy_mouse_buttons_report();
+        send_dummy_mouse_buttons_report(count);
+        count++;
+        if (count > 0xff) {
+            count = 0;
+        }
         // }
     }
 }
